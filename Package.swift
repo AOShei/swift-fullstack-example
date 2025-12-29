@@ -10,9 +10,15 @@ let package = Package(
     ],
     dependencies: [
         // Vapor for the Backend
-        .package(url: "[https://github.com/vapor/vapor.git](https://github.com/vapor/vapor.git)", from: "4.89.0"),
+        // URL must be a plain string, no Markdown formatting
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+        
         // Tokamak for the Frontend (WebAssembly)
-        .package(url: "[https://github.com/TokamakUI/Tokamak](https://github.com/TokamakUI/Tokamak)", from: "0.11.0"),
+        .package(url: "https://github.com/TokamakUI/Tokamak.git", from: "0.11.0"),
+
+        // Force use of swift-system 1.3.0 to avoid compiler parser errors 
+        // with the newest version (1.4.0) on Linux.
+        .package(url: "https://github.com/apple/swift-system.git", .upToNextMinor(from: "1.3.0"))
     ],
     targets: [
         // 1. Shared Logic (The Contract)
@@ -22,6 +28,8 @@ let package = Package(
         .executableTarget(
             name: "Backend",
             dependencies: [
+                // Note: The package name is derived from the URL (last part before .git)
+                // So "https://github.com/vapor/vapor.git" becomes package: "vapor"
                 .product(name: "Vapor", package: "vapor"),
                 "Shared"
             ]
