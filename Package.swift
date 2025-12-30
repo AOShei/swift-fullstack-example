@@ -10,7 +10,6 @@ let package = Package(
     ],
     dependencies: [
         // 1. Hummingbird (The lightweight Vapor alternative)
-        // CHANGED: "1.13.0" -> "1.0.0" to ensure we get the latest VALID 1.x version
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "1.0.0"),
         
         // 2. Tokamak (Frontend)
