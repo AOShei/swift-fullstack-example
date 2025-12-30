@@ -1,6 +1,7 @@
 import TokamakDOM
 import Foundation
 import Shared
+import JavaScriptKit
 
 @main
 struct TaskApp: App {
@@ -12,6 +13,16 @@ struct TaskApp: App {
 }
 
 struct ContentView: View {
+    // ---------------------------------------------------------
+    // 🚨 CONFIGURATION STEP 🚨
+    // 1. Go to the "Ports" tab in VS Code.
+    // 2. Right-click Port 8080 -> Port Visibility -> Public.
+    // 3. Copy the "Local Address" (e.g., https://...-8080.app.github.dev).
+    // 4. Paste it below (ensure no trailing slash).
+    // ---------------------------------------------------------
+    let backendURL = "https://CHANGE-ME-TO-YOUR-PORT-8080-URL.app.github.dev"
+    // ---------------------------------------------------------
+
     @State private var tasks: [TaskItem] = []
     @State private var newTaskTitle = ""
     @State private var isLoading = false
@@ -24,10 +35,15 @@ struct ContentView: View {
 
             HStack {
                 TextField("New Task...", text: $newTaskTitle)
-                Button("Add") {
-                    createTask()
+                
+                if newTaskTitle.isEmpty {
+                    Button("Add") { }
+                        .opacity(0.5)
+                } else {
+                    Button("Add") {
+                        createTask()
+                    }
                 }
-                .disabled(newTaskTitle.isEmpty)
             }
             .padding()
 
@@ -50,37 +66,73 @@ struct ContentView: View {
         }
     }
 
-    // Networking Logic using Swift's native URLSession
+    // 1. Fetch Logic
     func fetchTasks() {
         isLoading = true
-        guard let url = URL(string: "[http://127.0.0.1:8080/tasks](http://127.0.0.1:8080/tasks)") else { return }
-
-        URLSession.shared.dataTask(with: url) { data, _, _ in
-            DispatchQueue.main.async {
-                isLoading = false
-                if let data = data, let decoded = try? JSONDecoder().decode([TaskItem].self, from: data) {
+        
+        Task {
+            do {
+                let jsFetch = JSObject.global.fetch.function!
+                
+                // USE DYNAMIC URL
+                let resultVal = jsFetch("\(backendURL)/tasks")
+                
+                guard let promise = JSPromise(resultVal.object!) else { return }
+                let responseVal = try await promise.value
+                let responseObj = responseVal.object!
+                
+                let textResult = responseObj.text!()
+                guard let textPromise = JSPromise(textResult.object!) else { return }
+                let textVal = try await textPromise.value
+                
+                if let jsonString = textVal.string,
+                   let data = jsonString.data(using: .utf8) {
+                    let decoded = try JSONDecoder().decode([TaskItem].self, from: data)
                     self.tasks = decoded
                 }
+                
+                self.isLoading = false
+            } catch {
+                print("Fetch Error: \(error)")
+                self.isLoading = false
             }
-        }.resume()
+        }
     }
 
+    // 2. Create Logic
     func createTask() {
-        guard let url = URL(string: "[http://127.0.0.1:8080/tasks](http://127.0.0.1:8080/tasks)") else { return }
+        guard !newTaskTitle.isEmpty else { return }
+        
         let newTask = TaskItem(title: newTaskTitle)
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONEncoder().encode(newTask)
-
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            DispatchQueue.main.async {
-                if data != nil {
-                    self.tasks.append(newTask)
-                    self.newTaskTitle = ""
-                }
+        Task {
+            do {
+                let encoder = JSONEncoder()
+                guard let data = try? encoder.encode(newTask),
+                      let jsonString = String(data: data, encoding: .utf8) else { return }
+                
+                let jsFetch = JSObject.global.fetch.function!
+                let objectConstructor = JSObject.global.Object.function!
+                
+                var options = objectConstructor.new()
+                options["method"] = "POST"
+                
+                var headers = objectConstructor.new()
+                headers["Content-Type"] = "application/json"
+                options["headers"] = headers.jsValue
+                options["body"] = jsonString.jsValue
+                
+                // USE DYNAMIC URL
+                let resultVal = jsFetch("\(backendURL)/tasks", options)
+                
+                guard let promise = JSPromise(resultVal.object!) else { return }
+                _ = try await promise.value
+                
+                self.tasks.append(newTask)
+                self.newTaskTitle = ""
+            } catch {
+                print("Post Error: \(error)")
             }
-        }.resume()
+        }
     }
 }

@@ -20,7 +20,7 @@ struct CORSMiddleware: HBAsyncMiddleware {
         }
         
         // Handle normal requests and add CORS headers to response
-        let response = try await next.respond(to: request)
+        var response = try await next.respond(to: request)
         response.headers.replaceOrAdd(name: "Access-Control-Allow-Origin", value: "*")
         return response
     }
