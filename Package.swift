@@ -9,14 +9,14 @@ let package = Package(
         .executable(name: "Frontend", targets: ["Frontend"]),
     ],
     dependencies: [
-        // 1. Hummingbird (The lightweight Vapor alternative)
-        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "1.0.0"),
+        // Hummingbird for Backend
+        .package(url: "https://github.com/hummingbird-project/hummingbird.git", .upToNextMinor(from: "1.11.0")),
         
-        // 2. Tokamak (Frontend)
+        // Tokamak for Frontend
         .package(url: "https://github.com/TokamakUI/Tokamak.git", from: "0.11.0"),
         
-        // 3. System Fix (Keep this to prevent Linux parser errors)
-        .package(url: "https://github.com/apple/swift-system.git", .upToNextMinor(from: "1.3.0"))
+        // Lock System to 1.2.1 to prevent Linux parser errors
+        .package(url: "https://github.com/apple/swift-system.git", exact: "1.2.1")
     ],
     targets: [
         .target(name: "Shared"),
