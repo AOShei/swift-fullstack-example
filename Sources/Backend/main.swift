@@ -1,34 +1,46 @@
-import Vapor
+import Hummingbird
 import Shared
+import Foundation
 
-var env = try Environment.detect()
-let app = try Application(env)
-defer { app.shutdown() }
+// 1. Create the App
+let app = HBApplication(configuration: .init(address: .hostname("0.0.0.0", port: 8080)))
 
-// 1. Configure CORS (Allow the browser to access the API)
-let corsConfiguration = CORSMiddleware.Configuration(
-    allowedOrigin: .all,
-    allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE],
-    allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith]
-)
-let cors = CORSMiddleware(configuration: corsConfiguration)
-app.middleware.use(cors)
+// 2. Add CORS Middleware (Manually)
+// This allows your Frontend (browser) to talk to this Backend.
+app.middleware.add(HBCallbackMiddleware { request, next in
+    // Handle "Pre-flight" OPTIONS checks
+    if request.method == .OPTIONS {
+        return .init(status: .ok, headers: [
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+        ], body: .empty)
+    }
+    
+    // Handle normal requests and add CORS headers to response
+    let response = try await next.respond(to: request)
+    response.headers.replaceOrAdd(name: "Access-Control-Allow-Origin", value: "*")
+    return response
+})
 
-// 2. In-Memory Database (simulated)
+// 3. In-Memory Data
 var tasks: [TaskItem] = [
-    TaskItem(title: "Learn Swift Server", isCompleted: true),
-    TaskItem(title: "Build a Web App", isCompleted: false)
+    TaskItem(title: "Learn Hummingbird", isCompleted: true),
+    TaskItem(title: "Compile Faster", isCompleted: false)
 ]
 
-// 3. Define Routes
-app.get("tasks") { req -> [TaskItem] in
+// 4. Define Routes
+app.router.get("tasks") { _ in
     return tasks
 }
 
-app.post("tasks") { req -> TaskItem in
-    let newTask = try req.content.decode(TaskItem.self)
+app.router.post("tasks") { req -> TaskItem in
+    // Note: Hummingbird uses 'decode' instead of 'content.decode'
+    let newTask = try req.decode(as: TaskItem.self)
     tasks.append(newTask)
     return newTask
 }
 
-try app.run()
+// 5. Start Server
+try app.start()
+app.wait()
