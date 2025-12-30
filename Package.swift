@@ -3,39 +3,33 @@ import PackageDescription
 
 let package = Package(
     name: "TaskApp",
-    platforms: [.macOS(.v13)], // Required for Vapor, ignored by Wasm
+    platforms: [.macOS(.v13)],
     products: [
         .executable(name: "Backend", targets: ["Backend"]),
         .executable(name: "Frontend", targets: ["Frontend"]),
     ],
     dependencies: [
-        // Vapor for the Backend
-        // URL must be a plain string, no Markdown formatting
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+        // 1. Hummingbird (The lightweight Vapor alternative)
+        // CHANGED: "1.13.0" -> "1.0.0" to ensure we get the latest VALID 1.x version
+        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "1.0.0"),
         
-        // Tokamak for the Frontend (WebAssembly)
+        // 2. Tokamak (Frontend)
         .package(url: "https://github.com/TokamakUI/Tokamak.git", from: "0.11.0"),
-
-        // Force use of swift-system 1.3.0 to avoid compiler parser errors 
-        // with the newest version (1.4.0) on Linux.
+        
+        // 3. System Fix (Keep this to prevent Linux parser errors)
         .package(url: "https://github.com/apple/swift-system.git", .upToNextMinor(from: "1.3.0"))
     ],
     targets: [
-        // 1. Shared Logic (The Contract)
         .target(name: "Shared"),
 
-        // 2. Backend (Server)
         .executableTarget(
             name: "Backend",
             dependencies: [
-                // Note: The package name is derived from the URL (last part before .git)
-                // So "https://github.com/vapor/vapor.git" becomes package: "vapor"
-                .product(name: "Vapor", package: "vapor"),
+                .product(name: "Hummingbird", package: "hummingbird"),
                 "Shared"
             ]
         ),
 
-        // 3. Frontend (Web Client)
         .executableTarget(
             name: "Frontend",
             dependencies: [
