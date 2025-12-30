@@ -2,45 +2,53 @@ import Hummingbird
 import Shared
 import Foundation
 
-// 1. Create the App
+// 1. EXTENSION: Make TaskItem returnable directly
+// Hummingbird needs to know this Codable struct is safe to send as a JSON response.
+extension TaskItem: HBResponseCodable {}
+
+// 2. MIDDLEWARE: Custom CORS Middleware
+// We define a struct because 'HBCallbackMiddleware' does not exist in this version.
+struct CORSMiddleware: HBAsyncMiddleware {
+    func apply(to request: HBRequest, next: HBResponder) async throws -> HBResponse {
+        // Handle "Pre-flight" OPTIONS checks
+        if request.method == .OPTIONS {
+            return .init(status: .ok, headers: [
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+            ])
+        }
+        
+        // Handle normal requests and add CORS headers to response
+        let response = try await next.respond(to: request)
+        response.headers.replaceOrAdd(name: "Access-Control-Allow-Origin", value: "*")
+        return response
+    }
+}
+
+// 3. Setup App
 let app = HBApplication(configuration: .init(address: .hostname("0.0.0.0", port: 8080)))
 
-// 2. Add CORS Middleware (Manually)
-// This allows your Frontend (browser) to talk to this Backend.
-app.middleware.add(HBCallbackMiddleware { request, next in
-    // Handle "Pre-flight" OPTIONS checks
-    if request.method == .OPTIONS {
-        return .init(status: .ok, headers: [
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
-        ], body: .empty)
-    }
-    
-    // Handle normal requests and add CORS headers to response
-    let response = try await next.respond(to: request)
-    response.headers.replaceOrAdd(name: "Access-Control-Allow-Origin", value: "*")
-    return response
-})
+// Add the middleware
+app.middleware.add(CORSMiddleware())
 
-// 3. In-Memory Data
+// 4. In-Memory Database (simulated)
 var tasks: [TaskItem] = [
-    TaskItem(title: "Learn Hummingbird", isCompleted: true),
-    TaskItem(title: "Compile Faster", isCompleted: false)
+    TaskItem(title: "Learn Swift Server", isCompleted: true),
+    TaskItem(title: "Build a Web App", isCompleted: false)
 ]
 
-// 4. Define Routes
+// 5. Define Routes
 app.router.get("tasks") { _ in
     return tasks
 }
 
 app.router.post("tasks") { req -> TaskItem in
-    // Note: Hummingbird uses 'decode' instead of 'content.decode'
     let newTask = try req.decode(as: TaskItem.self)
     tasks.append(newTask)
     return newTask
 }
 
-// 5. Start Server
+// 6. Start Server
 try app.start()
 app.wait()
