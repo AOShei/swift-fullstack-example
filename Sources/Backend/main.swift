@@ -1,54 +1,41 @@
-import Hummingbird
+import Vapor
 import Shared
-import Foundation
 
-// 1. EXTENSION: Make TaskItem returnable directly
-// Hummingbird needs to know this Codable struct is safe to send as a JSON response.
-extension TaskItem: HBResponseCodable {}
+// 1. EXTENSION: Make TaskItem conform to Content
+// Vapor uses 'Content' to automatically handle JSON encoding/decoding.
+extension TaskItem: Content {}
 
-// 2. MIDDLEWARE: Custom CORS Middleware
-// We define a struct because 'HBCallbackMiddleware' does not exist in this version.
-struct CORSMiddleware: HBAsyncMiddleware {
-    func apply(to request: HBRequest, next: HBResponder) async throws -> HBResponse {
-        // Handle "Pre-flight" OPTIONS checks
-        if request.method == .OPTIONS {
-            return .init(status: .ok, headers: [
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
-            ])
-        }
-        
-        // Handle normal requests and add CORS headers to response
-        var response = try await next.respond(to: request)
-        response.headers.replaceOrAdd(name: "Access-Control-Allow-Origin", value: "*")
-        return response
-    }
-}
+var env = try Environment.detect()
+let app = Application(env)
+defer { app.shutdown() }
 
-// 3. Setup App
-let app = HBApplication(configuration: .init(address: .hostname("0.0.0.0", port: 8080)))
+// 2. MIDDLEWARE: Configure CORS
+// Essential for the browser frontend to talk to this backend.
+let corsConfiguration = CORSMiddleware.Configuration(
+    allowedOrigin: .all,
+    allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
+    allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith]
+)
+let cors = CORSMiddleware(configuration: corsConfiguration)
+app.middleware.use(cors)
 
-// Add the middleware
-app.middleware.add(CORSMiddleware())
-
-// 4. In-Memory Database (simulated)
+// 3. In-Memory Database (simulated)
 var tasks: [TaskItem] = [
-    TaskItem(title: "Learn Swift Server", isCompleted: true),
-    TaskItem(title: "Build a Web App", isCompleted: false)
+    TaskItem(title: "Setup Development Environment", isCompleted: true),
+    TaskItem(title: "Complete First Assignment", isCompleted: false)
 ]
 
-// 5. Define Routes
-app.router.get("tasks") { _ in
+// 4. Define Routes
+app.get("tasks") { req -> [TaskItem] in
     return tasks
 }
 
-app.router.post("tasks") { req -> TaskItem in
-    let newTask = try req.decode(as: TaskItem.self)
+app.post("tasks") { req -> TaskItem in
+    // Vapor automatically decodes the JSON body into our struct
+    let newTask = try req.content.decode(TaskItem.self)
     tasks.append(newTask)
     return newTask
 }
 
-// 6. Start Server
-try app.start()
-app.wait()
+// 5. Start Server
+try app.run()

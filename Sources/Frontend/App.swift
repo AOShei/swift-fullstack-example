@@ -20,7 +20,7 @@ struct ContentView: View {
     // 3. Copy the "Local Address" (e.g., https://...-8080.app.github.dev).
     // 4. Paste it below (ensure no trailing slash).
     // ---------------------------------------------------------
-    let backendURL = "https://CHANGE-ME-TO-YOUR-PORT-8080-URL.app.github.dev"
+    let backendURL = "http://localhost:8080" // <-- REPLACE THIS WITH YOUR PUBLIC URL
     // ---------------------------------------------------------
 
     @State private var tasks: [TaskItem] = []
@@ -114,10 +114,10 @@ struct ContentView: View {
                 let jsFetch = JSObject.global.fetch.function!
                 let objectConstructor = JSObject.global.Object.function!
                 
-                var options = objectConstructor.new()
+                let options = objectConstructor.new()
                 options["method"] = "POST"
                 
-                var headers = objectConstructor.new()
+                let headers = objectConstructor.new()
                 headers["Content-Type"] = "application/json"
                 options["headers"] = headers.jsValue
                 options["body"] = jsonString.jsValue
