@@ -1,0 +1,90 @@
+#extend("base"):
+    #export("body"):
+        <!-- Navigation Bar -->
+        <div class="navigation-bar">
+            <h1 class="navigation-title">Task Board</h1>
+            
+            <!-- Filter Segmented Control -->
+            <div class="segmented-control">
+                <a href="/?filter=all" class="segment-button #if(filter == "all"):selected#endif">All</a>
+                <a href="/?filter=active" class="segment-button #if(filter == "active"):selected#endif">Active</a>
+                <a href="/?filter=completed" class="segment-button #if(filter == "completed"):selected#endif">Completed</a>
+                <a href="/?filter=archived" class="segment-button #if(filter == "archived"):selected#endif">Archived</a>
+                <a href="/?filter=overdue" class="segment-button #if(filter == "overdue"):selected#endif">Overdue</a>
+            </div>
+        </div>
+        
+        <!-- Add Task Form -->
+        <form action="/tasks/create" method="post" class="task-form">
+            <input type="text" name="title" placeholder="New task title..." class="task-input" required>
+            <input type="datetime-local" name="dueDate" class="task-input">
+            <button type="submit" class="button-primary">Add Task</button>
+        </form>
+        
+        <!-- Task List -->
+        #if(count(tasks) > 0):
+            <div class="task-list">
+                #for(task in tasks):
+                    <div class="task-row">
+                        <!-- Complete Checkbox -->
+                        <form action="/tasks/#(task.id)/toggle" method="post" style="margin: 0;">
+                            <button type="submit" class="task-checkbox" style="background: none; border: none; padding: 0;">
+                                #if(task.isCompleted):
+                                    <span style="color: #34C759;">✓</span>
+                                #else:
+                                    <span style="color: rgba(60, 60, 67, 0.3);">○</span>
+                                #endif
+                            </button>
+                        </form>
+                        
+                        <!-- Task Info -->
+                        <div class="task-info">
+                            <p class="task-title #if(task.isCompleted):completed#endif">#(task.title)</p>
+                            <div class="task-meta">
+                                <span>#(task.createdAgo)</span>
+                                #if(task.dueDate):
+                                    <span>•</span>
+                                    <span class="#if(task.isOverdue):overdue#endif">
+                                        Due: #(task.dueDateFormatted)
+                                    </span>
+                                #endif
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="task-actions">
+                            #if(!task.isArchived):
+                                <form action="/tasks/#(task.id)/archive" method="post" style="margin: 0;">
+                                    <button type="submit" class="action-button" title="Archive">📦</button>
+                                </form>
+                            #else:
+                                <form action="/tasks/#(task.id)/unarchive" method="post" style="margin: 0;">
+                                    <button type="submit" class="action-button" title="Unarchive">📂</button>
+                                </form>
+                            #endif
+                            
+                            <form action="/tasks/#(task.id)/delete" method="post" style="margin: 0;" 
+                                  onsubmit="return confirm('Delete this task?');">
+                                <button type="submit" class="action-button" title="Delete">🗑</button>
+                            </form>
+                        </div>
+                    </div>
+                #endfor
+            </div>
+        #else:
+            <div class="empty-state">
+                #if(filter == "all"):
+                    No tasks yet.<br>Add one above to get started!
+                #elseif(filter == "active"):
+                    No active tasks.<br>All done! 🎉
+                #elseif(filter == "completed"):
+                    No completed tasks yet.
+                #elseif(filter == "archived"):
+                    No archived tasks.
+                #elseif(filter == "overdue"):
+                    No overdue tasks.<br>You're on track! 👍
+                #endif
+            </div>
+        #endif
+    #endexport
+#endextend

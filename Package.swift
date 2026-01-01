@@ -6,24 +6,17 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [
         .executable(name: "Backend", targets: ["Backend"]),
-        .executable(name: "Frontend", targets: ["Frontend"]),
     ],
     dependencies: [
-        // 1. Vapor (Back to the Standard)
+        // Vapor web framework
         .package(url: "https://github.com/vapor/vapor.git", from: "4.99.0"),
         
-        // 2. Tokamak (Frontend)
-        .package(url: "https://github.com/TokamakUI/Tokamak.git", from: "0.11.0"),
+        // Leaf templating engine for server-side rendering
+        .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
         
-        // 3. System Fix
-        .package(url: "https://github.com/apple/swift-system.git", exact: "1.2.1"),
-
-        // 4. THE "ANTI-HANG" LIST
-        // Crucial: We keep these pinned to prevent the Codespace dependency solver 
-        // from hanging on infinite calculations.
-        .package(url: "https://github.com/apple/swift-nio.git", exact: "2.65.0"),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", exact: "2.26.0"),
-        .package(url: "https://github.com/apple/swift-nio-http2.git", exact: "1.29.0"),
+        // Fluent ORM & SQLite driver
+        .package(url: "https://github.com/vapor/fluent.git", exact: "4.9.0"),
+        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", exact: "4.6.0"),
     ],
     targets: [
         .target(name: "Shared"),
@@ -32,15 +25,13 @@ let package = Package(
             name: "Backend",
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
+                .product(name: "Leaf", package: "leaf"),
+                .product(name: "Fluent", package: "fluent"),
+                .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
                 "Shared"
-            ]
-        ),
-
-        .executableTarget(
-            name: "Frontend",
-            dependencies: [
-                .product(name: "TokamakShim", package: "Tokamak"),
-                "Shared"
+            ],
+            resources: [
+                .copy("Resources")
             ]
         ),
     ]

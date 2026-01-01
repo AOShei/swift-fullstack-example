@@ -4,3 +4,5 @@ Package.resolved
 .vscode/
 .github/
 Bundle/
+
+*.sqlite
