@@ -11,7 +11,7 @@ import Shared
 // - Testability (can mock repositories)
 // - Reusability (multiple routes can share logic)
 
-final class TaskRepository {
+struct TaskRepository {
     let database: Database
     
     // MARK: - Initialization

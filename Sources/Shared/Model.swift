@@ -3,7 +3,7 @@ import Foundation
 // "Codable" allows this to be converted to JSON automatically.
 // This is a Data Transfer Object (DTO) - the contract between frontend and backend.
 // Teaching note: In iOS, this would be your model layer (like structs in SwiftUI apps)
-public struct TaskItem: Identifiable, Codable, Equatable {
+public struct TaskItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var title: String
     public var isCompleted: Bool

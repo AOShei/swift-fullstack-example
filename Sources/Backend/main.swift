@@ -259,7 +259,11 @@ extension TaskItem: Content {}
 let env = try Environment.detect()
 let app = try await Application.make(env)
 
-defer { app.shutdown() }
-
 try await configure(app)
+
+// Run the app
 try await app.execute()
+
+// Handle shutdown
+try await app.shutdown()
+
