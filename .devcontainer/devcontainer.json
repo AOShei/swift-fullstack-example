@@ -1,11 +1,11 @@
 {
     "name": "Swift 6 Environment",
-    "image": "swift:6.2",
+    "image": "swift:6.2", 
     "customizations": {
         "vscode": {
             "extensions": [
                 "swiftlang.swift-vscode",
-                "vadimcn.vscode-lldb",
+                "vadimcn.vscode-lldb", 
                 "editorconfig.editorconfig"
             ],
             "settings": {
@@ -20,7 +20,7 @@
     "forwardPorts": [
         8080
     ],
-    "postCreateCommand": "swift --version && echo 'Ready to code! Run `swift run` to start the server.'",
+    "postCreateCommand": "sudo chown -R vscode:vscode . && swift package resolve && echo 'Ready to code! Run `swift run` to start the server.'",
     "remoteUser": "vscode",
     "features": {
         "ghcr.io/devcontainers/features/common-utils:2": {
