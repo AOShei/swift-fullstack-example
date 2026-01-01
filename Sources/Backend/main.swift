@@ -264,6 +264,3 @@ try await configure(app)
 // Run the app
 try await app.execute()
 
-// Handle shutdown
-try await app.shutdown()
-
