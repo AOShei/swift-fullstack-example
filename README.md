@@ -117,7 +117,7 @@ You'll see the Task Board interface with:
 The `TaskItem` struct is a **Data Transfer Object** (DTO) - it's what gets sent between layers:
 
 ```swift
-public struct TaskItem: Identifiable, Codable, Equatable {
+public struct TaskItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var title: String
     public var isCompleted: Bool
@@ -161,7 +161,7 @@ final class TaskModel: Model {
 The repository abstracts database operations:
 
 ```swift
-final class TaskRepository {
+struct TaskRepository {
     let database: Database
 
     func findAll() async throws -> [TaskItem]
