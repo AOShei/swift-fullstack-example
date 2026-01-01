@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.2
 import PackageDescription
 
 let package = Package(
@@ -9,16 +9,21 @@ let package = Package(
     ],
     dependencies: [
         // Vapor web framework
+        // (This automatically brings in swift-nio, swift-nio-ssl, swift-numerics, etc.)
         .package(url: "https://github.com/vapor/vapor.git", from: "4.99.0"),
         
-        // Leaf templating engine for server-side rendering
+        // Leaf templating engine
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
         
-        // Fluent ORM & SQLite driver
-        .package(url: "https://github.com/vapor/fluent.git", exact: "4.9.0"),
-        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", exact: "4.6.0"),
+        // Fluent ORM
+        .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
+        
+        // Fluent SQLite driver
+        // (This automatically brings in sqlite-nio)
+        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
     ],
     targets: [
+        // Assuming "Shared" is a local module you created
         .target(name: "Shared"),
 
         .executableTarget(
